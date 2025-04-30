@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  birthdate DateTime
+  gender    String
+  provider  String // 'email', 'kakao', 'google'
+  createdAt DateTime @default(now())
+
+  healthData       UserDiseaseInfo[]
+  dietLogs         UserDietLog[]
+  foodRecords      FoodRecord[]
+  imageUploads     FoodImage[]
+  healthReports    HealthReport[]
+  communityPosts   CommunityPost[]
+  comments         PostComment[]
+  consultations    Consultation[]
+  nutrientTrackers NutrientTracker[]
+  aiSearchLogs     AISearchLog[]
+}
+
+model UserDiseaseInfo {
+  id           Int     @id @default(autoincrement())
+  user         User    @relation(fields: [userId], references: [id])
+  userId       Int
+  disease      Disease @relation(fields: [diseaseId], references: [id])
+  diseaseId    Int
+  proteinLimit Float?
+  sugarLimit   Float?
+  sodiumLimit  Float?
+  notes        String?
+}
+
+model Disease {
+  id               Int                          @id @default(autoincrement())
+  name             String
+  description      String?
+  maxProteinPerDay Float?
+  maxSugarPerDay   Float?
+  maxSodiumPerDay  Float?
+  categoryId       Int?
+  category         RareDiseaseCategory?         @relation(fields: [categoryId], references: [id])
+  restrictions     DiseaseNutrientRestriction[]
+  warnings         DiseaseWarning[]
+  userInfos        UserDiseaseInfo[]
+}
+
+model RareDiseaseCategory {
+  id           Int       @id @default(autoincrement())
+  mainCategory String
+  subCategory  String
+  diseases     Disease[]
+}
+
+model DiseaseWarning {
+  id            Int     @id @default(autoincrement())
+  disease       Disease @relation(fields: [diseaseId], references: [id])
+  diseaseId     Int
+  warningType   String
+  warningDetail String?
+  sourceUrl     String?
+}
+
+model DiseaseNutrientRestriction {
+  id              Int     @id @default(autoincrement())
+  disease         Disease @relation(fields: [diseaseId], references: [id])
+  diseaseId       Int
+  nutrientType    String // protein, sugar, etc.
+  maxAmountPerDay Float
+  unit            String
+}
+
+model Food {
+  id            Int            @id @default(autoincrement())
+  name          String
+  barcode       String?        @unique
+  calories      Float?
+  protein       Float?
+  fat           Float?
+  carbs         Float?
+  sugar         Float?
+  sodium        Float?
+  servingSize   String?
+  foodRecords   FoodRecord[]
+  mealItems     DietLogFood[]
+  detectedFoods DetectedFood[]
+}
+
+model UserDietLog {
+  id        Int           @id @default(autoincrement())
+  user      User          @relation(fields: [userId], references: [id])
+  userId    Int
+  date      DateTime
+  mealType  String // breakfast, lunch, dinner
+  notes     String?
+  createdAt DateTime      @default(now())
+  foods     DietLogFood[]
+}
+
+model DietLogFood {
+  id     Int         @id @default(autoincrement())
+  log    UserDietLog @relation(fields: [logId], references: [id])
+  logId  Int
+  food   Food        @relation(fields: [foodId], references: [id])
+  foodId Int
+  amount Float
+}
+
+model FoodRecord {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+  food       Food     @relation(fields: [foodId], references: [id])
+  foodId     Int
+  amount     Float
+  consumedAt DateTime
+}
+
+model FoodImage {
+  id            Int            @id @default(autoincrement())
+  user          User           @relation(fields: [userId], references: [id])
+  userId        Int
+  imageUrl      String
+  status        String // 분석중, 완료
+  resultText    String?
+  createdAt     DateTime       @default(now())
+  detectedFoods DetectedFood[]
+}
+
+model DetectedFood {
+  id         Int       @id @default(autoincrement())
+  image      FoodImage @relation(fields: [imageId], references: [id])
+  imageId    Int
+  food       Food      @relation(fields: [foodId], references: [id])
+  foodId     Int
+  confidence Float
+}
+
+model HealthReport {
+  id                     Int      @id @default(autoincrement())
+  user                   User     @relation(fields: [userId], references: [id])
+  userId                 Int
+  reportType             String // 주간 리포트 등
+  startDate              DateTime
+  endDate                DateTime
+  summary                String?
+  totalCalories          Float?
+  avgProtein             Float?
+  avgCarbs               Float?
+  avgFat                 Float?
+  avgSodium              Float?
+  riskScore              Float?
+  improvementSuggestions String?
+  createdAt              DateTime @default(now())
+}
+
+model NutrientTracker {
+  id               Int      @id @default(autoincrement())
+  user             User     @relation(fields: [userId], references: [id])
+  userId           Int
+  date             DateTime
+  totalProtein     Float
+  totalSugar       Float
+  totalSodium      Float
+  remainingProtein Float
+  remainingSugar   Float
+  remainingSodium  Float
+}
+
+model CommunityPost {
+  id        Int           @id @default(autoincrement())
+  user      User          @relation(fields: [userId], references: [id])
+  userId    Int
+  title     String
+  content   String
+  createdAt DateTime      @default(now())
+  comments  PostComment[]
+}
+
+model PostComment {
+  id        Int           @id @default(autoincrement())
+  post      CommunityPost @relation(fields: [postId], references: [id])
+  postId    Int
+  user      User          @relation(fields: [userId], references: [id])
+  userId    Int
+  comment   String
+  createdAt DateTime      @default(now())
+}
+
+model Expert {
+  id            Int            @id @default(autoincrement())
+  name          String
+  specialty     String
+  introText     String?
+  consultations Consultation[]
+}
+
+model Consultation {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  expert    Expert   @relation(fields: [expertId], references: [id])
+  expertId  Int
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model AISearchLog {
+  id            Int      @id @default(autoincrement())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int
+  searchTerm    String
+  resultSummary String?
+  searchedAt    DateTime @default(now())
+}
