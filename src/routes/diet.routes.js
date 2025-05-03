@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { authenticate } from "../middlewares/auth.middleware";
+import { authenticate } from "../middlewares/auth.middleware.js";
 import {
   addFoodToLog,
   createDietLog,
   getAllDietLogs,
   getDietLogDetail,
   removeFoodFromLog,
-} from "../controllers/diet.controller";
+} from "../controllers/diet.controller.js";
 
 const router = Router();
 

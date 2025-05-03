@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { authenticate } from "../middlewares/auth.middleware";
+import { authenticate } from "../middlewares/auth.middleware.js";
 import {
   createFood,
   getFoodById,
   searchFoods,
-} from "../controllers/food.controller";
+} from "../controllers/food.controller.js";
 
 const router = Router();
 
