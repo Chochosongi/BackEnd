@@ -8,37 +8,39 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String
-  birthdate DateTime
-  gender    String
-  provider  String // 'email', 'kakao', 'google'
-  createdAt DateTime @default(now())
-
-  healthData       UserDiseaseInfo[]
-  dietLogs         UserDietLog[]
-  foodRecords      FoodRecord[]
-  imageUploads     FoodImage[]
-  healthReports    HealthReport[]
-  communityPosts   CommunityPost[]
-  comments         PostComment[]
-  consultations    Consultation[]
-  nutrientTrackers NutrientTracker[]
+  id               Int               @id @default(autoincrement())
+  email            String            @unique
+  password         String
+  name             String
+  birthdate        DateTime?
+  gender           String?
+  provider         String
+  createdAt        DateTime          @default(now())
   aiSearchLogs     AISearchLog[]
+  communityPosts   CommunityPost[]
+  consultations    Consultation[]
+  imageUploads     FoodImage[]
+  foodRecords      FoodRecord[]
+  healthReports    HealthReport[]
+  nutrientTrackers NutrientTracker[]
+  comments         PostComment[]
+  dietLogs         UserDietLog[]
+  healthData       UserDiseaseInfo[]
 }
 
 model UserDiseaseInfo {
   id           Int     @id @default(autoincrement())
-  user         User    @relation(fields: [userId], references: [id])
   userId       Int
-  disease      Disease @relation(fields: [diseaseId], references: [id])
   diseaseId    Int
   proteinLimit Float?
   sugarLimit   Float?
   sodiumLimit  Float?
   notes        String?
+  disease      Disease @relation(fields: [diseaseId], references: [id])
+  user         User    @relation(fields: [userId], references: [id])
+
+  @@index([diseaseId], map: "UserDiseaseInfo_diseaseId_fkey")
+  @@index([userId], map: "UserDiseaseInfo_userId_fkey")
 }
 
 model Disease {
@@ -53,6 +55,8 @@ model Disease {
   restrictions     DiseaseNutrientRestriction[]
   warnings         DiseaseWarning[]
   userInfos        UserDiseaseInfo[]
+
+  @@index([categoryId], map: "Disease_categoryId_fkey")
 }
 
 model RareDiseaseCategory {
@@ -64,20 +68,24 @@ model RareDiseaseCategory {
 
 model DiseaseWarning {
   id            Int     @id @default(autoincrement())
-  disease       Disease @relation(fields: [diseaseId], references: [id])
   diseaseId     Int
   warningType   String
   warningDetail String?
   sourceUrl     String?
+  disease       Disease @relation(fields: [diseaseId], references: [id])
+
+  @@index([diseaseId], map: "DiseaseWarning_diseaseId_fkey")
 }
 
 model DiseaseNutrientRestriction {
   id              Int     @id @default(autoincrement())
-  disease         Disease @relation(fields: [diseaseId], references: [id])
   diseaseId       Int
-  nutrientType    String // protein, sugar, etc.
+  nutrientType    String
   maxAmountPerDay Float
   unit            String
+  disease         Disease @relation(fields: [diseaseId], references: [id])
+
+  @@index([diseaseId], map: "DiseaseNutrientRestriction_diseaseId_fkey")
 }
 
 model Food {
@@ -91,66 +99,78 @@ model Food {
   sugar         Float?
   sodium        Float?
   servingSize   String?
-  foodRecords   FoodRecord[]
-  mealItems     DietLogFood[]
   detectedFoods DetectedFood[]
+  mealItems     DietLogFood[]
+  foodRecords   FoodRecord[]
 }
 
 model UserDietLog {
   id        Int           @id @default(autoincrement())
-  user      User          @relation(fields: [userId], references: [id])
   userId    Int
   date      DateTime
-  mealType  String // breakfast, lunch, dinner
+  mealType  String
   notes     String?
   createdAt DateTime      @default(now())
   foods     DietLogFood[]
+  user      User          @relation(fields: [userId], references: [id])
+
+  @@index([userId], map: "UserDietLog_userId_fkey")
 }
 
 model DietLogFood {
   id     Int         @id @default(autoincrement())
-  log    UserDietLog @relation(fields: [logId], references: [id])
   logId  Int
-  food   Food        @relation(fields: [foodId], references: [id])
   foodId Int
   amount Float
+  food   Food        @relation(fields: [foodId], references: [id])
+  log    UserDietLog @relation(fields: [logId], references: [id])
+
+  @@index([foodId], map: "DietLogFood_foodId_fkey")
+  @@index([logId], map: "DietLogFood_logId_fkey")
 }
 
 model FoodRecord {
   id         Int      @id @default(autoincrement())
-  user       User     @relation(fields: [userId], references: [id])
   userId     Int
-  food       Food     @relation(fields: [foodId], references: [id])
   foodId     Int
   amount     Float
   consumedAt DateTime
+  food       Food     @relation(fields: [foodId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@index([foodId], map: "FoodRecord_foodId_fkey")
+  @@index([userId], map: "FoodRecord_userId_fkey")
 }
 
 model FoodImage {
   id            Int            @id @default(autoincrement())
-  user          User           @relation(fields: [userId], references: [id])
   userId        Int
   imageUrl      String
-  status        String // 분석중, 완료
+  status        String
   resultText    String?
   createdAt     DateTime       @default(now())
   detectedFoods DetectedFood[]
+  user          User           @relation(fields: [userId], references: [id])
+
+  @@index([userId], map: "FoodImage_userId_fkey")
 }
 
 model DetectedFood {
   id         Int       @id @default(autoincrement())
-  image      FoodImage @relation(fields: [imageId], references: [id])
   imageId    Int
-  food       Food      @relation(fields: [foodId], references: [id])
   foodId     Int
   confidence Float
+  food       Food      @relation(fields: [foodId], references: [id])
+  image      FoodImage @relation(fields: [imageId], references: [id])
+
+  @@index([foodId], map: "DetectedFood_foodId_fkey")
+  @@index([imageId], map: "DetectedFood_imageId_fkey")
 }
 
 model HealthReport {
   id                     Int      @id @default(autoincrement())
-  user                   User     @relation(fields: [userId], references: [id])
   userId                 Int
-  reportType             String // 주간 리포트 등
+  reportType             String
   startDate              DateTime
   endDate                DateTime
   summary                String?
@@ -162,11 +182,13 @@ model HealthReport {
   riskScore              Float?
   improvementSuggestions String?
   createdAt              DateTime @default(now())
+  user                   User     @relation(fields: [userId], references: [id])
+
+  @@index([userId], map: "HealthReport_userId_fkey")
 }
 
 model NutrientTracker {
   id               Int      @id @default(autoincrement())
-  user             User     @relation(fields: [userId], references: [id])
   userId           Int
   date             DateTime
   totalProtein     Float
@@ -175,26 +197,34 @@ model NutrientTracker {
   remainingProtein Float
   remainingSugar   Float
   remainingSodium  Float
+  user             User     @relation(fields: [userId], references: [id])
+
+  @@index([userId], map: "NutrientTracker_userId_fkey")
 }
 
 model CommunityPost {
   id        Int           @id @default(autoincrement())
-  user      User          @relation(fields: [userId], references: [id])
   userId    Int
   title     String
   content   String
   createdAt DateTime      @default(now())
+  user      User          @relation(fields: [userId], references: [id])
   comments  PostComment[]
+
+  @@index([userId], map: "CommunityPost_userId_fkey")
 }
 
 model PostComment {
   id        Int           @id @default(autoincrement())
-  post      CommunityPost @relation(fields: [postId], references: [id])
   postId    Int
-  user      User          @relation(fields: [userId], references: [id])
   userId    Int
   comment   String
   createdAt DateTime      @default(now())
+  post      CommunityPost @relation(fields: [postId], references: [id])
+  user      User          @relation(fields: [userId], references: [id])
+
+  @@index([postId], map: "PostComment_postId_fkey")
+  @@index([userId], map: "PostComment_userId_fkey")
 }
 
 model Expert {
@@ -207,19 +237,49 @@ model Expert {
 
 model Consultation {
   id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
   userId    Int
-  expert    Expert   @relation(fields: [expertId], references: [id])
   expertId  Int
   message   String
   createdAt DateTime @default(now())
+  expert    Expert   @relation(fields: [expertId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([expertId], map: "Consultation_expertId_fkey")
+  @@index([userId], map: "Consultation_userId_fkey")
 }
 
 model AISearchLog {
   id            Int      @id @default(autoincrement())
-  user          User     @relation(fields: [userId], references: [id])
   userId        Int
   searchTerm    String
   resultSummary String?
   searchedAt    DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@index([userId], map: "AISearchLog_userId_fkey")
+}
+
+model RawIngredient {
+  id             Int      @id @default(autoincrement())
+  foodCode       String   @map("식품코드")
+  name           String   @map("식품명")
+  origin         String?  @map("식품기원명")
+  foodCategory   String?  @map("식품대분류명")
+  midCategory    String?  @map("식품중분류명")
+  subCategory    String?  @map("식품소분류명")
+  detailCategory String?  @map("식품세분류명")
+  energy         Float?   @map("에너지(kcal)")
+  protein        Float?   @map("단백질(g)")
+  fat            Float?   @map("지방(g)")
+  carbohydrate   Float?   @map("탄수화물(g)")
+  sodium         Float?   @map("나트륨(mg)")
+  calcium        Float?   @map("칼슘(mg)")
+  iron           Float?   @map("철(mg)")
+  vitaminA       Float?   @map("비타민 A(μg RAE)")
+  vitaminC       Float?   @map("비타민 C(mg)")
+  cholesterol    Float?   @map("콜레스테롤(mg)")
+  sourceName     String?  @map("출처명")
+  originCountry  String?  @map("원산지국명")
+  originRegion   String?  @map("원산지역명")
+  createdAt      DateTime @default(now())
 }
