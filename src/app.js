@@ -7,25 +7,26 @@ import dietRoutes from "./routes/diet.routes.js";
 import foodRoutes from "./routes/food.routes.js";
 import imageRoutes from "./routes/image.routes.js";
 import postRoutes from "./routes/post.routes.js";
+import { specs, swaggerUi } from "./swagger.js"; // ✅ 정확한 경로로 수정
 
 dotenv.config();
 
 const app = express();
-
-// 미들웨어
 app.use(json());
 
-// 라우터
+// ✅ Swagger UI 설정
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
+
+// 라우터 설정
 app.use("/", router);
 app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/diet", dietRoutes);
 app.use("/food", foodRoutes);
 app.use("/image", imageRoutes);
-app.use("/uploads", express.static("uploads")); // 이미지 정적 경로 서빙
+app.use("/uploads", express.static("uploads"));
 app.use("/community/posts", postRoutes);
 
-// 서버 실행
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
