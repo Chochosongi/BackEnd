@@ -12,7 +12,7 @@ const options = {
     },
     servers: [
       {
-        url: "http://localhost:3000", // 배포시 실제 URL로 수정
+        url: "https://forkcast.onrender.com", // 배포시 실제 URL로 수정
       },
     ],
     components: {

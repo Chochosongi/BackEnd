@@ -7,7 +7,7 @@ export async function createHealthInfo(req, res) {
   const {
     birthdate,
     gender,
-    diseaseId,
+    diseaseName, // ✅ 질병명 입력 받기
     proteinLimit,
     sugarLimit,
     sodiumLimit,
@@ -15,7 +15,18 @@ export async function createHealthInfo(req, res) {
   } = req.body;
 
   try {
-    // 1. 사용자 프로필 정보 업데이트
+    // 1. 질병명으로 diseaseId 조회
+    const disease = await prisma.disease.findUnique({
+      where: { name: diseaseName },
+    });
+
+    if (!disease) {
+      return res
+        .status(404)
+        .json({ message: "해당 질병명을 찾을 수 없습니다." });
+    }
+
+    // 2. 사용자 프로필 정보 업데이트
     await prisma.user.update({
       where: { id: userId },
       data: {
@@ -24,11 +35,11 @@ export async function createHealthInfo(req, res) {
       },
     });
 
-    // 2. 사용자 건강정보 저장
+    // 3. 사용자 건강정보 저장
     const diseaseInfo = await prisma.userDiseaseInfo.create({
       data: {
         userId,
-        diseaseId,
+        diseaseId: disease.id,
         proteinLimit,
         sugarLimit,
         sodiumLimit,
