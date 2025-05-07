@@ -16,7 +16,7 @@ export async function createHealthInfo(req, res) {
 
   try {
     // 1. 질병명으로 diseaseId 조회
-    const disease = await prisma.disease.findUnique({
+    const disease = await prisma.disease.findFirst({
       where: { name: diseaseName },
     });
 
@@ -82,16 +82,36 @@ export const getHealthInfo = async (req, res) => {
 
 export const updateHealthInfo = async (req, res) => {
   const userId = req.user.userId;
-  const { diseaseId, proteinLimit, sugarLimit, sodiumLimit, notes } = req.body;
+  const {
+    diseaseName, // 👈 diseaseId 대신 이름을 받음
+    proteinLimit,
+    sugarLimit,
+    sodiumLimit,
+    notes,
+  } = req.body;
 
   try {
+    // 1. 질병명으로 disease 엔티티 조회
+    const disease = await prisma.disease.findFirst({
+      where: { name: diseaseName },
+    });
+
+    if (!disease) {
+      return res.status(404).json({
+        message: `"${diseaseName}" 질병명을 가진 데이터가 존재하지 않습니다.`,
+      });
+    }
+
+    // 2. 기존 건강 정보 존재 여부 확인
     const existing = await prisma.userDiseaseInfo.findFirst({
-      where: { userId, diseaseId },
+      where: { userId, diseaseId: disease.id },
     });
 
     if (!existing) {
       return res.status(404).json({ message: "등록된 건강 정보가 없습니다." });
     }
+
+    // 3. 업데이트 수행
     const updated = await prisma.userDiseaseInfo.update({
       where: { id: existing.id },
       data: {
@@ -104,6 +124,7 @@ export const updateHealthInfo = async (req, res) => {
 
     res.status(200).json(updated);
   } catch (err) {
+    console.error("건강정보 수정 실패:", err);
     res.status(500).json({ message: "수정 실패" });
   }
 };
