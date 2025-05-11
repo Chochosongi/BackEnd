@@ -3,7 +3,7 @@ const prisma = new PrismaClient();
 
 // 전체 게시글 조회
 export const getPosts = async (req, res) => {
-  const posts = await prisma.post.findMany({
+  const posts = await prisma.communityPost.findMany({
     include: { user: true },
     orderBy: { createdAt: "desc" },
   });
@@ -12,7 +12,7 @@ export const getPosts = async (req, res) => {
 
 // 게시글 상세 조회
 export const getPostById = async (req, res) => {
-  const post = await prisma.post.findUnique({
+  const post = await prisma.communityPost.findUnique({
     where: { id: Number(req.params.id) },
     include: { user: true, comments: true },
   });
@@ -24,7 +24,7 @@ export const getPostById = async (req, res) => {
 export const createPost = async (req, res) => {
   const { title, content } = req.body;
   const userId = req.user.userId;
-  const newPost = await prisma.post.create({
+  const newPost = await prisma.communityPost.create({
     data: { title, content, userId },
   });
   res.status(201).json(newPost);
@@ -36,12 +36,12 @@ export const updatePost = async (req, res) => {
   const userId = req.user.userId;
   const postId = Number(req.params.id);
 
-  const post = await prisma.post.findUnique({ where: { id: postId } });
+  const post = await prisma.communityPost.findUnique({ where: { id: postId } });
   if (!post || post.userId !== userId) {
     return res.status(403).json({ message: "수정 권한 없음" });
   }
 
-  const updated = await prisma.post.update({
+  const updated = await prisma.communityPost.update({
     where: { id: postId },
     data: { title, content },
   });
@@ -53,7 +53,7 @@ export const deletePost = async (req, res) => {
   const userId = req.user.userId;
   const postId = Number(req.params.id);
 
-  const post = await prisma.post.findUnique({ where: { id: postId } });
+  const post = await prisma.communityPost.findUnique({ where: { id: postId } });
   if (!post || post.userId !== userId) {
     return res.status(403).json({ message: "삭제 권한 없음" });
   }
@@ -68,7 +68,7 @@ export const createComment = async (req, res) => {
   const postId = Number(req.params.id);
   const userId = req.user.userId;
 
-  const comment = await prisma.comment.create({
+  const comment = await prisma.postComment.create({
     data: { content, postId, userId },
   });
   res.status(201).json(comment);
@@ -77,7 +77,7 @@ export const createComment = async (req, res) => {
 // 댓글 조회
 export const getComments = async (req, res) => {
   const postId = Number(req.params.id);
-  const comments = await prisma.comment.findMany({
+  const comments = await prisma.postComment.findMany({
     where: { postId },
     include: { user: true },
     orderBy: { createdAt: "asc" },

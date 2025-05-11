@@ -7,6 +7,8 @@ export async function createHealthInfo(req, res) {
   const {
     birthdate,
     gender,
+    height,
+    weight,
     diseaseName, // ✅ 질병명 입력 받기
     proteinLimit,
     sugarLimit,
@@ -32,6 +34,8 @@ export async function createHealthInfo(req, res) {
       data: {
         birthdate: new Date(birthdate),
         gender: gender,
+        height,
+        weight,
       },
     });
 
