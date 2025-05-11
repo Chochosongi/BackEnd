@@ -16,6 +16,8 @@ export async function createHealthInfo(req, res) {
     notes,
   } = req.body;
 
+  console.log(prisma.user);
+
   try {
     // 1. 질병명으로 diseaseId 조회
     const disease = await prisma.disease.findFirst({
