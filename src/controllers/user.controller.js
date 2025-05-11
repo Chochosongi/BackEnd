@@ -34,8 +34,8 @@ export async function createHealthInfo(req, res) {
       data: {
         birthdate: new Date(birthdate),
         gender: gender,
-        height,
-        weight,
+        height: height,
+        weight: weight,
       },
     });
 
