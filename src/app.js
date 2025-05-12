@@ -7,6 +7,7 @@ import dietRoutes from "./routes/diet.routes.js";
 import foodRoutes from "./routes/food.routes.js";
 import imageRoutes from "./routes/image.routes.js";
 import postRoutes from "./routes/post.routes.js";
+import aiRoutes from "./routes/ai.routes.js";
 import { specs, swaggerUi } from "./swagger.js"; // ✅ 정확한 경로로 수정
 
 dotenv.config();
@@ -26,6 +27,7 @@ app.use("/food", foodRoutes);
 app.use("/image", imageRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use("/community/posts", postRoutes);
+app.use("/ai", aiRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
