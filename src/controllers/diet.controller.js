@@ -7,6 +7,9 @@ const prisma = new PrismaClient();
 dotenv.config();
 
 export const createDietLog = async (req, res) => {
+  console.log("==== DEBUG: keys of prisma ====");
+  console.log(Object.keys(prisma));
+
   const userId = req.user.userId;
   const { date, mealType, notes } = req.body;
 
