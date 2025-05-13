@@ -213,7 +213,6 @@ export const getDietLogsByDate = async (req, res) => {
       },
     });
 
-    // breakfast, lunch, dinner 기준으로 분류
     const categorized = {
       breakfast: null,
       lunch: null,
@@ -223,7 +222,6 @@ export const getDietLogsByDate = async (req, res) => {
     logs.forEach((log) => {
       const key = log.mealType.toLowerCase();
       if (categorized.hasOwnProperty(key)) {
-        // 총합 계산
         const total = {
           energy: 0,
           sodium: 0,
@@ -231,16 +229,27 @@ export const getDietLogsByDate = async (req, res) => {
           protein: 0,
         };
 
-        log.DietLogFoodInfo?.forEach((food) => {
+        const foodInfos = log.DietLogFoodInfo.map((food) => {
           total.energy += food.energy || 0;
           total.sodium += food.sodium || 0;
           total.sugar += food.sugar || 0;
           total.protein += food.protein || 0;
+          return {
+            name: food.name,
+            energy: food.energy,
+            sodium: food.sodium,
+            sugar: food.sugar,
+            protein: food.protein,
+          };
         });
 
         categorized[key] = {
-          ...log,
+          id: log.id,
+          mealType: log.mealType,
+          notes: log.notes,
+          createdAt: log.createdAt,
           nutritionTotal: total,
+          foodInfos,
         };
       }
     });
