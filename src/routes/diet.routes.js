@@ -84,6 +84,28 @@ router.post("/:logId/food", authenticate, addFoodToLog);
 
 /**
  * @swagger
+ * /diet/logs:
+ *   get:
+ *     summary: 날짜별 식단 조회
+ *     tags: [Diet]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         required: true
+ *         description: 조회할 날짜 (예: 2025-05-13)
+ *     responses:
+ *       200:
+ *         description: 날짜별 식단 정보 반환
+ */
+router.get("/logs", authenticate, getDietLogsByDate);
+
+/**
+ * @swagger
  * /diet:
  *   get:
  *     summary: 내 모든 식단 조회
@@ -143,27 +165,5 @@ router.get("/:logId", authenticate, getDietLogDetail);
  *         description: 삭제 성공
  */
 router.delete("/:logId/food/:foodId", authenticate, removeFoodFromLog);
-
-/**
- * @swagger
- * /diet/logs:
- *   get:
- *     summary: 날짜별 식단 조회
- *     tags: [Diet]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: date
- *         schema:
- *           type: string
- *           format: date
- *         required: true
- *         description: 조회할 날짜 (예: 2025-05-13)
- *     responses:
- *       200:
- *         description: 날짜별 식단 정보 반환
- */
-router.get("/logs", authenticate, getDietLogsByDate);
 
 export default router;
