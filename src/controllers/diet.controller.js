@@ -5,8 +5,6 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const prisma = new PrismaClient();
-
 export const createDietLog = async (req, res) => {
   const userId = req.user.userId;
   const { date, mealType, notes } = req.body;
@@ -16,6 +14,7 @@ export const createDietLog = async (req, res) => {
   }
 
   try {
+    // 1. 식단 로그 생성
     const log = await prisma.userDietLog.create({
       data: {
         userId,
@@ -25,19 +24,28 @@ export const createDietLog = async (req, res) => {
       },
     });
 
+    // 2. 음식 이름 추출 (쉼표로 구분)
     const foodNames = notes
-      .split(/[,\s]+/)
+      .split(",")
       .map((word) => word.trim())
       .filter((word) => word.length > 0);
 
-    // OpenAI 기반 영양소 추정
+    if (foodNames.length === 0) {
+      return res.status(201).json({
+        message: "식단 추가 성공 (음식 없음)",
+        dietLog: log,
+        matchedFoods: [],
+      });
+    }
+
+    // 3. OpenAI API 호출
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const prompt = `
 다음은 식사 기록에 포함된 음식 항목입니다:
 ${foodNames.map((f) => `- ${f}`).join("\n")}
 
-각 음식에 대해 다음 4가지 영양소 정보를 표 형식으로 추정해 주세요....:
+각 음식에 대해 다음 4가지 영양소 정보를 표 형식으로 추정해 주세요:
 1. 에너지 (kcal)
 2. 나트륨 (mg)
 3. 당 (g)
@@ -56,27 +64,37 @@ ${foodNames.map((f) => `- ${f}`).join("\n")}
       temperature: 0.3,
     });
 
-    const tableText = chatResponse.choices[0]?.message?.content;
+    const tableText = chatResponse.choices[0]?.message?.content || "";
     const matchedFoods = [];
 
-    if (tableText) {
-      const lines = tableText
-        .split("\n")
-        .filter(
-          (line) => line.includes("|") && !line.toLowerCase().includes("음식")
-        );
-      for (const line of lines) {
-        const [name, kcal, sodium, sugar, protein] = line
-          .split("|")
-          .map((s) => s.trim());
-        matchedFoods.push({
-          name,
-          energy: parseFloat(kcal),
-          sodium: parseFloat(sodium),
-          sugar: parseFloat(sugar),
-          protein: parseFloat(protein),
-        });
-      }
+    const lines = tableText
+      .split("\n")
+      .filter(
+        (line) => line.includes("|") && !line.toLowerCase().includes("음식")
+      );
+
+    for (const line of lines) {
+      const [name, kcal, sodium, sugar, protein] = line
+        .split("|")
+        .map((s) => s.trim());
+
+      // 결과 저장
+      const foodData = {
+        name,
+        energy: parseFloat(kcal),
+        sodium: parseFloat(sodium),
+        sugar: parseFloat(sugar),
+        protein: parseFloat(protein),
+      };
+
+      matchedFoods.push(foodData);
+
+      await prisma.dietLogFoodInfo.create({
+        data: {
+          dietLogId: log.id,
+          ...foodData,
+        },
+      });
     }
 
     return res.status(201).json({
@@ -86,9 +104,10 @@ ${foodNames.map((f) => `- ${f}`).join("\n")}
     });
   } catch (error) {
     console.error("식단 추가 실패:", error);
-    return res
-      .status(500)
-      .json({ message: "서버 오류로 인해 식단을 추가할 수 없습니다." });
+    return res.status(500).json({
+      message: "서버 오류로 인해 식단을 추가할 수 없습니다.",
+      error: error.message,
+    });
   }
 };
 

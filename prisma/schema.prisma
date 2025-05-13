@@ -107,16 +107,32 @@ model Food {
 }
 
 model UserDietLog {
-  id        Int           @id @default(autoincrement())
-  userId    Int
-  date      DateTime
-  mealType  String
-  notes     String?
-  createdAt DateTime      @default(now())
-  foods     DietLogFood[]
-  user      User          @relation(fields: [userId], references: [id])
+  id              Int               @id @default(autoincrement())
+  userId          Int
+  date            DateTime
+  mealType        String
+  notes           String?
+  createdAt       DateTime          @default(now())
+  foods           DietLogFood[]
+  user            User              @relation(fields: [userId], references: [id])
+  DietLogFoodInfo DietLogFoodInfo[]
 
   @@index([userId], map: "UserDietLog_userId_fkey")
+}
+
+model DietLogFoodInfo {
+  id        Int      @id @default(autoincrement())
+  dietLogId Int
+  name      String
+  energy    Float?
+  sodium    Float?
+  sugar     Float?
+  protein   Float?
+  createdAt DateTime @default(now())
+
+  dietLog UserDietLog @relation(fields: [dietLogId], references: [id])
+
+  @@index([dietLogId])
 }
 
 model DietLogFood {
