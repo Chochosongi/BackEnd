@@ -90,7 +90,7 @@ ${foodNames.map((f) => `- ${f}`).join("\n")}
 
       matchedFoods.push(foodData);
 
-      await prisma.dietLogFoodInfos.create({
+      await prisma.dietLogFoodInfo.create({
         data: {
           dietLogId: log.id,
           ...foodData,
