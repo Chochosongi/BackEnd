@@ -121,17 +121,18 @@ export const updateHealthInfo = async (req, res) => {
 
     // 2. 기존 건강 정보 존재 여부 확인
     const existing = await prisma.userDiseaseInfo.findFirst({
-      where: { userId, diseaseId: disease.id },
+      where: { userId },
     });
 
     if (!existing) {
       return res.status(404).json({ message: "등록된 건강 정보가 없습니다." });
     }
 
-    // 3. 업데이트 수행
+    // 3. 업데이트 수행 (diseaseId 포함)
     const updated = await prisma.userDiseaseInfo.update({
       where: { id: existing.id },
       data: {
+        diseaseId: disease.id, // ✅ 질병 ID도 업데이트
         proteinLimit,
         sugarLimit,
         sodiumLimit,
@@ -142,6 +143,6 @@ export const updateHealthInfo = async (req, res) => {
     res.status(200).json(updated);
   } catch (err) {
     console.error("건강정보 수정 실패:", err);
-    res.status(500).json({ message: "수정 실패" });
+    res.status(500).json({ message: "수정 실패", error: err.message });
   }
 };
