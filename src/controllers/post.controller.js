@@ -64,14 +64,14 @@ export const deletePost = async (req, res) => {
 
 // 댓글 작성
 export const createComment = async (req, res) => {
-  const { content } = req.body;
+  const { comment } = req.body;
   const postId = Number(req.params.id);
   const userId = req.user.userId;
 
-  const comment = await prisma.postComment.create({
-    data: { content, postId, userId },
+  const comments = await prisma.postComment.create({
+    data: { conmment, postId, userId },
   });
-  res.status(201).json(comment);
+  res.status(201).json(comments);
 };
 
 // 댓글 조회
