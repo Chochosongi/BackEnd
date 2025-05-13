@@ -1,3 +1,4 @@
+import axios from "axios";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -25,26 +26,35 @@ export const createDietLog = async (req, res) => {
       .map((word) => word.trim())
       .filter((word) => word.length > 0);
 
-    console.log(foodNames);
+    const matchedFoods = [];
 
-    const matchedFoods = await prisma.rawIngredient.findMany({
-      where: {
-        OR: foodNames.map((name) => ({
-          name: {
-            contains: name,
+    for (const name of foodNames) {
+      const response = await axios.get(
+        "https://api.nal.usda.gov/fdc/v1/foods/search",
+        {
+          params: {
+            query: name,
+            pageSize: 1,
+            api_key: iW9lJFeKatvpNPdTwTcKBvxn6bdxbrJzbxXe6Ofj,
           },
-        })),
-      },
-      select: {
-        id: true,
-        name: true,
-        sodium: true,
-        protein: true,
-        energy: true,
-      },
-    });
+        }
+      );
 
-    console.log(matchedFoods);
+      const item = response.data.foods?.[0];
+      if (item) {
+        const getNutrient = (nutrients, key) =>
+          nutrients.find((n) => n.nutrientName.toLowerCase().includes(key))
+            ?.value ?? null;
+
+        matchedFoods.push({
+          name: item.description,
+          energy: getNutrient(item.foodNutrients, "energy"),
+          protein: getNutrient(item.foodNutrients, "protein"),
+          sugar: getNutrient(item.foodNutrients, "sugars"),
+          sodium: getNutrient(item.foodNutrients, "sodium"),
+        });
+      }
+    }
 
     return res.status(201).json({
       message: "식단 추가 성공",
