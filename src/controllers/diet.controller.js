@@ -2,6 +2,7 @@ import axios from "axios";
 import { OpenAI } from "openai";
 import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
+const prisma = new PrismaClient();
 
 dotenv.config();
 
