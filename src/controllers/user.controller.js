@@ -77,11 +77,22 @@ export const getHealthInfo = async (req, res) => {
   try {
     const data = await prisma.userDiseaseInfo.findMany({
       where: { userId },
-      include: { disease: true },
+      include: {
+        disease: true,
+        user: {
+          select: {
+            birthdate: true,
+            gender: true,
+            height: true,
+            weight: true,
+          },
+        },
+      },
     });
 
     res.status(200).json(data);
   } catch (err) {
+    console.error("건강정보 조회 실패:", err);
     res.status(500).json({ message: "조회 실패" });
   }
 };
