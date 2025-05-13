@@ -7,9 +7,6 @@ const prisma = new PrismaClient();
 dotenv.config();
 
 export const createDietLog = async (req, res) => {
-  console.log("==== DEBUG: keys of prisma ====");
-  console.log(Object.keys(prisma));
-
   const userId = req.user.userId;
   const { date, mealType, notes } = req.body;
 
@@ -189,5 +186,69 @@ export const removeFoodFromLog = async (req, res) => {
     res.status(200).json({ message: "삭제됨", deleted });
   } catch (err) {
     res.status(500).json({ message: "삭제 실패" });
+  }
+};
+
+export const getDietLogsByDate = async (req, res) => {
+  const userId = req.user.userId;
+  const { date } = req.query;
+
+  if (!date) {
+    return res.status(400).json({ message: "날짜가 필요합니다." });
+  }
+
+  try {
+    const logs = await prisma.userDietLog.findMany({
+      where: {
+        userId,
+        date: new Date(date),
+      },
+      include: {
+        foods: {
+          include: {
+            food: true,
+          },
+        },
+        DietLogFoodInfo: true,
+      },
+    });
+
+    // breakfast, lunch, dinner 기준으로 분류
+    const categorized = {
+      breakfast: null,
+      lunch: null,
+      dinner: null,
+    };
+
+    logs.forEach((log) => {
+      const key = log.mealType.toLowerCase();
+      if (categorized.hasOwnProperty(key)) {
+        // 총합 계산
+        const total = {
+          energy: 0,
+          sodium: 0,
+          sugar: 0,
+          protein: 0,
+        };
+
+        log.DietLogFoodInfo?.forEach((food) => {
+          total.energy += food.energy || 0;
+          total.sodium += food.sodium || 0;
+          total.sugar += food.sugar || 0;
+          total.protein += food.protein || 0;
+        });
+
+        categorized[key] = {
+          ...log,
+          nutritionTotal: total,
+        };
+      }
+    });
+
+    res.status(200).json({ date, logs: categorized });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "날짜별 식단 조회 실패", error: err.message });
   }
 };
