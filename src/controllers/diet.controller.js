@@ -6,6 +6,10 @@ export const createDietLog = async (req, res) => {
   const userId = req.user.userId;
   const { date, mealType, notes } = req.body;
 
+  if (!date || !mealType) {
+    return res.status(400).json({ message: "날짜와 식사 종류는 필수입니다." });
+  }
+
   try {
     const log = await prisma.userDietLog.create({
       data: {
@@ -15,9 +19,37 @@ export const createDietLog = async (req, res) => {
         notes,
       },
     });
-    res.status(201).json(log);
-  } catch (err) {
-    res.status(500).json({ message: "식단 생성 실패" });
+
+    const foodNames = notes
+      .split(/[,\s]+/)
+      .map((word) => word.trim())
+      .filter((word) => word.length > 0);
+
+    const matchedFoods = await prisma.rawIngredient.findMany({
+      where: {
+        name: {
+          in: foodNames,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        sodium: true,
+        protein: true,
+        energy: true,
+      },
+    });
+
+    return res.status(201).json({
+      message: "식단 추가 성공",
+      dietLog: log,
+      matchedFoods,
+    });
+  } catch (error) {
+    console.error("식단 추가 실패:", error);
+    return res
+      .status(500)
+      .json({ message: "서버 오류로 인해 식단을 추가할 수 없습니다." });
   }
 };
 
