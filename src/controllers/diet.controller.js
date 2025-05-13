@@ -92,7 +92,7 @@ ${foodNames.map((f) => `- ${f}`).join("\n")}
 
       await prisma.dietLogFoodInfo.create({
         data: {
-          dietLogId: logId,
+          dietLogId: log.id,
           ...foodData,
         },
       });
