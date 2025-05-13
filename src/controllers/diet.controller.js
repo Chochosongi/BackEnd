@@ -25,6 +25,8 @@ export const createDietLog = async (req, res) => {
       .map((word) => word.trim())
       .filter((word) => word.length > 0);
 
+    console.log(foodNames);
+
     const matchedFoods = await prisma.rawIngredient.findMany({
       where: {
         name: {
@@ -39,6 +41,8 @@ export const createDietLog = async (req, res) => {
         energy: true,
       },
     });
+
+    console.log(matchedFoods);
 
     return res.status(201).json({
       message: "식단 추가 성공",
