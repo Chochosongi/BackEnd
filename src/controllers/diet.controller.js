@@ -29,10 +29,9 @@ export const createDietLog = async (req, res) => {
 
     const matchedFoods = await prisma.rawIngredient.findMany({
       where: {
-        OR: foodNames.map((word) => ({
+        OR: foodNames.map((name) => ({
           name: {
-            contains: word,
-            mode: "insensitive",
+            contains: name,
           },
         })),
       },
