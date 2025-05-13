@@ -115,7 +115,7 @@ model UserDietLog {
   createdAt       DateTime          @default(now())
   foods           DietLogFood[]
   user            User              @relation(fields: [userId], references: [id])
-  DietLogFoodInfo DietLogFoodInfo[]
+  dietLogFoodInfo DietLogFoodInfo[]
 
   @@index([userId], map: "UserDietLog_userId_fkey")
 }
