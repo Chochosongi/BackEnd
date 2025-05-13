@@ -209,7 +209,7 @@ export const getDietLogsByDate = async (req, res) => {
             food: true,
           },
         },
-        DietLogFoodInfo: true,
+        dietLogFoodInfo: true,
       },
     });
 
@@ -229,7 +229,7 @@ export const getDietLogsByDate = async (req, res) => {
           protein: 0,
         };
 
-        const foodInfos = log.DietLogFoodInfo.map((food) => {
+        const foodInfos = log.dietLogFoodInfo.map((food) => {
           total.energy += food.energy || 0;
           total.sodium += food.sodium || 0;
           total.sugar += food.sugar || 0;
