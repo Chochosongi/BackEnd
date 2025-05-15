@@ -67,7 +67,7 @@ export const logout = async (req, res) => {
     }
 
     // 블랙리스트에 등록
-    await prisma.tokenBlacklist.create({ data: { token } });
+    await prisma.tokenBlackList.create({ data: { token } });
 
     res.status(200).json({ message: "로그아웃 완료" });
   } catch (err) {
