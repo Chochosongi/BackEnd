@@ -70,8 +70,12 @@ ${foodNames.map((f) => `- ${f}`).join("\n")}
 
     const lines = tableText
       .split("\n")
+      .map((line) => line.trim())
       .filter(
-        (line) => line.includes("|") && !line.toLowerCase().includes("음식")
+        (line) =>
+          line.includes("|") &&
+          !line.toLowerCase().includes("음식") &&
+          !line.startsWith("---")
       );
 
     for (const line of lines) {
