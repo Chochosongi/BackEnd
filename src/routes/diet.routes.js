@@ -39,10 +39,10 @@ const router = Router();
  *                 example: "2025-05-07"
  *               mealType:
  *                 type: string
- *                 example: "아침"
+ *                 example: "breakfast"
  *               notes:
  *                 type: string
- *                 example: "샐러드 먹음"
+ *                 example: "apple, banana, protein drink"
  *     responses:
  *       201:
  *         description: 식단 생성 성공
@@ -71,11 +71,9 @@ router.post("/", authenticate, createDietLog);
  *           schema:
  *             type: object
  *             properties:
- *               foodId:
- *                 type: integer
- *               amount:
- *                 type: number
- *                 example: 1
+ *              foodName:
+ *                 type: String
+ *                 example: apple
  *     responses:
  *       201:
  *         description: 음식 추가 성공
