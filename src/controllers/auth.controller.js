@@ -61,7 +61,7 @@ export const logout = async (req, res) => {
 
   try {
     // 이미 로그아웃된 토큰인지 확인
-    const exists = await prisma.tokenBlacklist.findUnique({ where: { token } });
+    const exists = await prisma.tokenBlackList.findUnique({ where: { token } });
     if (exists) {
       return res.status(400).json({ message: "Token already blacklisted" });
     }
