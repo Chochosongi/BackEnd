@@ -14,7 +14,7 @@ export async function authenticate(req, res, next) {
 
   try {
     // 🚫 블랙리스트 확인
-    const blacklisted = await prisma.tokenBlacklist.findUnique({
+    const blacklisted = await prisma.tokenBlackList.findUnique({
       where: { token },
     });
 
