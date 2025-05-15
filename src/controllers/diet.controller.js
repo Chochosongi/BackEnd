@@ -114,19 +114,75 @@ ${foodNames.map((f) => `- ${f}`).join("\n")}
 
 export const addFoodToLog = async (req, res) => {
   const { logId } = req.params;
-  const { foodId, amount } = req.body;
+  const { foodName } = req.body;
+
+  if (!foodName) {
+    return res.status(400).json({ message: "foodName이 필요합니다." });
+  }
 
   try {
-    const added = await prisma.dietLogFood.create({
-      data: {
-        logId: Number(logId),
-        foodId,
-        amount,
-      },
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    // 프롬프트 구성
+    const prompt = `
+다음은 음식 항목입니다:
+- ${foodName}
+
+다음 4가지 영양소 정보를 표 형식으로 추정해 주세요:
+1. 에너지 (kcal)
+2. 나트륨 (mg)
+3. 당 (g)
+4. 단백질 (g)
+
+형식:
+음식 | 칼로리 (kcal) | 나트륨 (mg) | 당 (g) | 단백질 (g)
+`;
+
+    // GPT 호출
+    const chatResponse = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        { role: "system", content: "당신은 음식 영양소를 추정하는 AI입니다." },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.3,
     });
-    res.status(201).json(added);
+
+    const responseText = chatResponse.choices[0]?.message?.content || "";
+
+    // 응답에서 영양소 추출
+    const line = responseText
+      .split("\n")
+      .find(
+        (line) => line.includes("|") && !line.toLowerCase().includes("음식")
+      );
+
+    if (!line) {
+      return res.status(400).json({ message: "영양 정보 추출 실패" });
+    }
+
+    const [name, kcal, sodium, sugar, protein] = line
+      .split("|")
+      .map((s) => s.trim());
+
+    const foodData = {
+      dietLogId: Number(logId),
+      name,
+      energy: parseFloat(kcal),
+      sodium: parseFloat(sodium),
+      sugar: parseFloat(sugar),
+      protein: parseFloat(protein),
+    };
+
+    const added = await prisma.dietLogFoodInfo.create({ data: foodData });
+
+    res.status(201).json({
+      message: "음식 추가 성공 (OpenAI 추정)",
+      added,
+    });
   } catch (err) {
-    res.status(500).json({ message: "음식 추가 실패" });
+    console.error("음식 추가 실패:", err);
+    res.status(500).json({ message: "음식 추가 실패", error: err.message });
   }
 };
 
