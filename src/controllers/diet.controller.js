@@ -151,30 +151,30 @@ export const addFoodToLog = async (req, res) => {
     const responseText = chatResponse.choices[0]?.message?.content || "";
 
     // 응답에서 영양소 추출
-    const line = responseText
-      .split("\n")
-      .find(
-        (line) => line.includes("|") && !line.toLowerCase().includes("음식")
-      );
+    const lines = responseText.split("\n").filter((line) => line.includes("|"));
 
-    if (!line) {
-      return res.status(400).json({ message: "영양 정보 추출 실패" });
+    const dataLine = lines.find((line) => !line.toLowerCase().includes("음식"));
+
+    if (!dataLine) {
+      return res
+        .status(400)
+        .json({ message: "영양 정보 추출 실패: 유효한 줄 없음" });
     }
 
-    const [name, kcal, sodium, sugar, protein] = line
+    const [name, kcal, sodium, sugar, protein] = dataLine
       .split("|")
       .map((s) => s.trim());
 
-    const foodData = {
+    const parsed = {
       dietLogId: Number(logId),
       name,
-      energy: parseFloat(kcal),
-      sodium: parseFloat(sodium),
-      sugar: parseFloat(sugar),
-      protein: parseFloat(protein),
+      energy: isNaN(parseFloat(kcal)) ? null : parseFloat(kcal),
+      sodium: isNaN(parseFloat(sodium)) ? null : parseFloat(sodium),
+      sugar: isNaN(parseFloat(sugar)) ? null : parseFloat(sugar),
+      protein: isNaN(parseFloat(protein)) ? null : parseFloat(protein),
     };
 
-    const added = await prisma.dietLogFoodInfo.create({ data: foodData });
+    const added = await prisma.dietLogFoodInfo.create({ data: parsed });
 
     res.status(201).json({
       message: "음식 추가 성공 (OpenAI 추정)",
