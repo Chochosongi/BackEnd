@@ -81,6 +81,8 @@ export const getHealthInfo = async (req, res) => {
         disease: true,
         user: {
           select: {
+            name: true,
+            email: true,
             birthdate: true,
             gender: true,
             height: true,
