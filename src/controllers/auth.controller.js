@@ -47,3 +47,31 @@ export async function login(req, res) {
     res.status(500).json({ message: "로그인 실패" });
   }
 }
+
+export const logout = async (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res
+      .status(400)
+      .json({ message: "Authorization header missing or malformed" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    // 이미 로그아웃된 토큰인지 확인
+    const exists = await prisma.tokenBlacklist.findUnique({ where: { token } });
+    if (exists) {
+      return res.status(400).json({ message: "Token already blacklisted" });
+    }
+
+    // 블랙리스트에 등록
+    await prisma.tokenBlacklist.create({ data: { token } });
+
+    res.status(200).json({ message: "로그아웃 완료" });
+  } catch (err) {
+    console.error("로그아웃 실패:", err);
+    res.status(500).json({ message: "로그아웃 실패", error: err.message });
+  }
+};

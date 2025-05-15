@@ -301,3 +301,8 @@ model RawIngredient {
   originRegion   String?  @map("원산지역명")
   createdAt      DateTime @default(now())
 }
+
+model TokenBlackList {
+  token     String   @id
+  createdAt DateTime @default(now())
+}

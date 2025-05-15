@@ -1,6 +1,7 @@
 import { Router } from "express";
 const router = Router();
-import { signUp, login } from "../controllers/auth.controller.js";
+import { signUp, login, logout } from "../controllers/auth.controller.js";
+import { authenticate } from "../middlewares/auth.middleware.js";
 
 /**
  * @swagger
@@ -60,5 +61,59 @@ router.post("/signup", signUp);
  *         description: 유저 없음
  */
 router.post("/login", login);
+
+/**
+ * @swagger
+ * auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: 로그아웃
+      description: 현재 사용 중인 JWT 액세스 토큰을 블랙리스트에 추가하여 로그아웃합니다.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 로그아웃 완료
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 로그아웃 완료
+        '400':
+          description: 잘못된 요청 (헤더 누락 또는 이미 로그아웃된 토큰 등)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Token already blacklisted
+        '401':
+          description: 인증 실패 (토큰이 없거나 유효하지 않음)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid token
+        '500':
+          description: 서버 오류
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 로그아웃 실패
+ */
+router.post("/logout", authenticate, logout);
 
 export default router;
