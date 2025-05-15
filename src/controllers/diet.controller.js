@@ -116,29 +116,21 @@ export const addFoodToLog = async (req, res) => {
   const { logId } = req.params;
   const { foodName } = req.body;
 
-  if (!foodName) {
-    return res.status(400).json({ message: "foodName이 필요합니다." });
-  }
-
   try {
+    // GPT 요청
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    // 프롬프트 구성
     const prompt = `
-다음은 음식 항목입니다:
-- ${foodName}
-
-다음 4가지 영양소 정보를 표 형식으로 추정해 주세요:
-1. 에너지 (kcal)
-2. 나트륨 (mg)
-3. 당 (g)
-4. 단백질 (g)
+"${foodName}"에 대한 아래 4가지 영양 정보를 표 형식으로 추정해 주세요:
+- 칼로리 (kcal)
+- 나트륨 (mg)
+- 당 (g)
+- 단백질 (g)
 
 형식:
 음식 | 칼로리 (kcal) | 나트륨 (mg) | 당 (g) | 단백질 (g)
 `;
 
-    // GPT 호출
     const chatResponse = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
@@ -149,37 +141,36 @@ export const addFoodToLog = async (req, res) => {
     });
 
     const responseText = chatResponse.choices[0]?.message?.content || "";
+    console.log("GPT 응답:", responseText);
 
-    // 응답에서 영양소 추출
-    const lines = responseText.split("\n").filter((line) => line.includes("|"));
+    // 응답에서 첫 번째 유효한 줄 추출
+    const line = responseText
+      .split("\n")
+      .map((l) => l.trim())
+      .find((l) => l.includes("|") && !l.toLowerCase().includes("음식"));
 
-    const dataLine = lines.find((line) => !line.toLowerCase().includes("음식"));
-
-    if (!dataLine) {
+    if (!line) {
       return res
         .status(400)
-        .json({ message: "영양 정보 추출 실패: 유효한 줄 없음" });
+        .json({ message: "영양 정보 추출 실패: 유효한 줄이 없습니다." });
     }
 
-    const [name, kcal, sodium, sugar, protein] = dataLine
+    const [name, kcal, sodium, sugar, protein] = line
       .split("|")
       .map((s) => s.trim());
 
-    const parsed = {
-      dietLogId: Number(logId),
-      name,
-      energy: isNaN(parseFloat(kcal)) ? null : parseFloat(kcal),
-      sodium: isNaN(parseFloat(sodium)) ? null : parseFloat(sodium),
-      sugar: isNaN(parseFloat(sugar)) ? null : parseFloat(sugar),
-      protein: isNaN(parseFloat(protein)) ? null : parseFloat(protein),
-    };
-
-    const added = await prisma.dietLogFoodInfo.create({ data: parsed });
-
-    res.status(201).json({
-      message: "음식 추가 성공 (OpenAI 추정)",
-      added,
+    const added = await prisma.dietLogFoodInfo.create({
+      data: {
+        dietLogId: Number(logId),
+        name,
+        energy: parseFloat(kcal) || 0,
+        sodium: parseFloat(sodium) || 0,
+        sugar: parseFloat(sugar) || 0,
+        protein: parseFloat(protein) || 0,
+      },
     });
+
+    res.status(201).json({ message: "음식 추가 성공 (OpenAI 추정)", added });
   } catch (err) {
     console.error("음식 추가 실패:", err);
     res.status(500).json({ message: "음식 추가 실패", error: err.message });
